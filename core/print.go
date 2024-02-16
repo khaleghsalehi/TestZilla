@@ -64,6 +64,18 @@ func (p *Printer) updateProgressValue(rs *SnapshotReport) {
 	}
 }
 
+func (p *Printer) GetJsonReport(snapshot func() *SnapshotReport, interval time.Duration, useSeconds bool, json bool, doneChan <-chan struct{}) []byte {
+	var buf bytes.Buffer
+
+	report := snapshot()
+	p.updateProgressValue(report)
+	buf.Reset()
+	p.formatJSONReports(&buf, report, true, useSeconds)
+	result := buf.Bytes()
+	fmt.Println(string(result))
+	return result
+}
+
 func (p *Printer) PrintLoop(snapshot func() *SnapshotReport, interval time.Duration, useSeconds bool, json bool, doneChan <-chan struct{}) {
 	var buf bytes.Buffer
 
@@ -83,6 +95,9 @@ func (p *Printer) PrintLoop(snapshot func() *SnapshotReport, interval time.Durat
 			p.formatTableReports(&buf, report, isFinal, useSeconds)
 		}
 		result := buf.Bytes()
+		fmt.Println("========================")
+		fmt.Println(string(result))
+		fmt.Println("========================")
 		n := 0
 		for {
 			i := bytes.IndexByte(result, '\n')

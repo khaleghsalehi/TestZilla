@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -175,15 +176,24 @@ func rateFlag(c *kingpin.Clause) (target *rateFlagValue) {
 	return
 }
 
-func main() {
-	fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
-	kingpin.UsageTemplate(CompactUsageTemplate).
-		Version(core.TestzillaVersion).
-		Author("KhaleghSalehi@Gmail.com").
-		Resolver(kingpin.PrefixedEnvarResolver("TESTZILLA_", ";")).
-		Help = `A high-performance HTTP benchmarking tool with real-time statistical`
-	kingpin.Parse()
+func StartTest(ctx *gin.Context) {
+	// here we define rest API for req handeling
+	*url = ctx.Query("url")
 
+	*insecure = true
+	*jsonFormat = true
+
+	maxThread, _ := strconv.Atoi(ctx.Query("maxThread"))
+	*concurrency = maxThread
+
+	maxRequest, _ := strconv.Atoi(ctx.Query("maxRequest"))
+	*requests = int64(maxRequest)
+
+	testDuration, _ := strconv.Atoi(ctx.Query("testDuration"))
+	*duration = time.Duration(testDuration) * time.Second
+
+	*method = "GET"
+	*reqRate = rateFlagValue{infinity: true}
 	if *requests >= 0 && *requests < int64(*concurrency) {
 		errAndExit("requests must greater than or equal concurrency")
 		return
@@ -255,7 +265,7 @@ func main() {
 	}
 
 	// description
-	fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
+	//fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
 	var desc string
 	desc = fmt.Sprintf("Benchmarking %s", *url)
 	if *requests > 0 {
@@ -279,4 +289,36 @@ func main() {
 	// terminal printer
 	printer := core.NewPrinter(*requests, *duration, !*clean, *summary)
 	printer.PrintLoop(report.Snapshot, *interval, *seconds, *jsonFormat, report.Done())
+
+	jsonResponse := printer.GetJsonReport(report.Snapshot, *interval, *seconds, *jsonFormat, report.Done())
+	_, _ = ctx.Writer.WriteString(string(jsonResponse))
+}
+func main() {
+	osArguments := os.Args
+	_, _ = fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
+	if osArguments[1] == "server" {
+		// here we run testzilla as a management server
+		fmt.Println("Not implemented, under development.")
+	} else if osArguments[1] == "agent_standalone" { //agent mode
+		fmt.Println("Run in standalone mode")
+		kingpin.UsageTemplate(CompactUsageTemplate).
+			Version(core.TestzillaVersion).
+			Author("KhaleghSalehi@Gmail.com").
+			Resolver(kingpin.PrefixedEnvarResolver("TESTZILLA_", ";")).
+			Help = `A high-performance HTTP benchmarking tool with real-time statistical`
+		kingpin.Parse()
+	} else if osArguments[1] == "agent_distributed" { //agent mode
+		fmt.Println("Run in distributed  mode, waiting command...")
+		r := gin.Default()
+		r.GET("/start", StartTest)
+
+		err := r.Run()
+		if err != nil {
+			println("Error while start agent service.")
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("Usage: ", osArguments[0], " server|agent_standalone|agent_distributed")
+	}
+
 }

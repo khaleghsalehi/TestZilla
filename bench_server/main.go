@@ -23,6 +23,7 @@ func main() {
 			c.SetStatusCode(400)
 		}
 		_, werr := c.Write(c.Request.Body())
+
 		if werr != nil {
 			log.Println(werr)
 		}
