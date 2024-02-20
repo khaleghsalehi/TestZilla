@@ -1,0 +1,80 @@
+{{ template "menu.html" .}}
+<!-- Sidebar -->
+<div id="content-wrapper" class="d-flex flex-column">
+    <div id="content">
+        <!-- TopBar -->
+        <nav class="navbar navbar-expand navbar-light bg-navbar topbar mb-4 static-top">
+            <button id="sidebarToggleTop" class="btn btn-link rounded-circle mr-3">
+                <i class="fa fa-bars"></i>
+            </button>
+
+        </nav>
+
+        <!-- Container Fluid-->
+        <div class="container-fluid" id="container-wrapper">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Tests Report</h1>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12 mb-4">
+                    <!-- Simple Tables -->
+                    <div class="card">
+                        <div class="table-responsive" style="overflow-y:scroll;height:650px">
+                            <table class="table align-items-center table-flush">
+                                <thead class="thead-light">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Test Name</th>
+                                    <th>Status</th>
+                                    <th>Report Link</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>12 Jun 2023, 12:48:56</td>
+                                    <td>Payment AP Stress Test</td>
+                                    <td>Finished</td>
+                                    <td><a href="$">Download PDF</a></td>
+                                </tr>
+                                <tr>
+                                    <td>12 Jun 2023, 12:48:56</td>
+                                    <td>Payment AP Stress Test</td>
+                                    <td>Running...</td>
+                                    <td></td>
+                                </tr>
+
+                                {{ range .allTest }}
+                                <tr>
+                                    <td>{{ .DateTime }}</td>
+                                    <td>{{ .TestName }}</td>
+                                    <td>{{ .TestStatus }}</td>
+                                    <td>{{ .TestReportLink }}</td>
+                                </tr>
+                                {{ end }}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer"></div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <!---Container Fluid-->
+    </div>
+    {{ template "footer.html" .}}
+
+</div>
+</div>
+
+
+<script src="vendor/jquery/jquery.min.js"></script>
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="js/ruang-admin.min.js"></script>
+
+
+</body>
+
+</html>

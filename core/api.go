@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-ping/ping"
 	"io"
+	"net/http"
 	"strings"
 	"testzilla/core/net_service"
 	"time"
@@ -54,11 +55,42 @@ func GetAgentReports(ctx *gin.Context) {
 	println("report from "+agentIp+" report body -> ", string(data))
 	return
 }
+func PageRanger(ctx *gin.Context, data gin.H, templateName string) {
+
+	switch ctx.Request.Header.Get("Accept") {
+	case "application/json":
+		ctx.JSON(http.StatusOK, data["payload"])
+	case "application/xml":
+		ctx.XML(http.StatusOK, data["payload"])
+	default:
+		ctx.HTML(http.StatusOK, templateName, data)
+	}
+}
+func Index(ctx *gin.Context) {
+	PageRanger(ctx,
+		gin.H{},
+		"index.html",
+	)
+}
+func NewTestForm(ctx *gin.Context) {
+	PageRanger(ctx,
+		gin.H{},
+		"new.html",
+	)
+}
+func ShowTestForm(ctx *gin.Context) {
+	PageRanger(ctx,
+		gin.H{},
+		"report.html",
+	)
+}
 func DeployAgentOnNodes(ctx *gin.Context) {
 	//todo authentication and authorization
 
+	var testName = ctx.PostForm("testName")
 	var nodeIPList = ctx.PostForm("nodeIPList")
 	//todo input validation
+	println("get TestName -> " + testName)
 	if len(nodeIPList) > 0 {
 		/*
 			e.g 192.168.1.1,192.168.2.2,192.168.3.3
@@ -68,7 +100,7 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 			if isAvailable(ip) == false {
 				msg := ip + " is not available, please remove it and try again"
 				println(msg)
-				ctx.Redirect(302, "/?msg="+msg)
+				ctx.Redirect(302, "/new?msg="+msg)
 				return
 			}
 		}
@@ -77,7 +109,7 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 			go newTask(ip)
 		}
 	}
-	ctx.Redirect(302, "/")
+	ctx.Redirect(302, "/report")
 	return
 	// here we call agents
 	/**

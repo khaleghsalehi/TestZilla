@@ -332,7 +332,6 @@ startPoint:
 
 func main() {
 	osArguments := os.Args
-
 	/* for in-house test */
 	//var osArguments [10]string
 	//osArguments[1] = "server"
@@ -340,7 +339,17 @@ func main() {
 	_, _ = fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
 	if osArguments[1] == "server" {
 		r := gin.Default()
+		r.Static("/css", "./assets/css")
+		r.Static("/img", "./assets/img")
+		r.Static("/js", "./assets/js")
+		r.Static("/font", "./assets/font")
+		r.Static("/vendor", "./assets/vendor")
+		r.LoadHTMLGlob("templates/*")
+
 		//API controller
+		r.GET("/", core.Index)                              /* process test request (post form) */
+		r.GET("/new", core.NewTestForm)                     /* process test request (post form) */
+		r.GET("/report", core.ShowTestForm)                 /* process test request (post form) */
 		r.POST("/deployNodes", core.DeployAgentOnNodes)     /* process test request (post form) */
 		r.POST("/getNodesTestReport", core.GetAgentReports) /* get report from agents (nodes) */
 

@@ -35,7 +35,9 @@ You can run TestZilla in one of the following modes:
 2. Agent:  TestZilla as a agent (Test Node)
    3. Standalone: Run node in single mode
    4. Distributed: Run node in distributed mode 
+ # Web Dashboard
 
+![web dashboard](screen.png)
 
 
 # Demo
