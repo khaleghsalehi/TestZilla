@@ -1,3 +1,3 @@
 package core
 
-var TestzillaVersion = "0.0.1"
+var TestzillaVersion = "0.0.2"

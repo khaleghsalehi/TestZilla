@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -292,13 +294,63 @@ func StartTest(ctx *gin.Context) {
 
 	jsonResponse := printer.GetJsonReport(report.Snapshot, *interval, *seconds, *jsonFormat, report.Done())
 	_, _ = ctx.Writer.WriteString(string(jsonResponse))
+
+	// send report to  server
+startPoint:
+	pass := false
+	serverGetReportURL := "http://localhost:9090/getNodesTestReport"
+	request, err := http.NewRequest("POST", serverGetReportURL, bytes.NewBuffer(jsonResponse))
+	if err != nil {
+		return
+	}
+	request.Header.Add("Content-Type", "application/json")
+	client := &http.Client{}
+	res, err := client.Do(request)
+	if err != nil {
+		return
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+	if res.StatusCode == 200 {
+		println("server get report successfully")
+		pass = true
+	} else {
+		println("server get report failed")
+		pass = false
+		time.Sleep(5 * time.Second)
+
+	}
+	if pass == false {
+		println("try again...")
+		goto startPoint
+	} else {
+		println("mission done.")
+	}
+
 }
+
 func main() {
 	osArguments := os.Args
+
+	/* for in-house test */
+	//var osArguments [10]string
+	//osArguments[1] = "server"
+
 	_, _ = fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
 	if osArguments[1] == "server" {
-		// here we run testzilla as a management server
-		fmt.Println("Not implemented, under development.")
+		r := gin.Default()
+		//API controller
+		r.POST("/deployNodes", core.DeployAgentOnNodes)     /* process test request (post form) */
+		r.POST("/getNodesTestReport", core.GetAgentReports) /* get report from agents (nodes) */
+
+		addr := []string{":" + core.TestZillaServerPortNumber}
+		err := r.Run(addr...)
+		if err != nil {
+			return
+		} else {
+			println("TestZilla server started and listen on port ", core.TestZillaServerPortNumber)
+		}
 	} else if osArguments[1] == "agent_standalone" { //agent mode
 		fmt.Println("Run in standalone mode")
 		kingpin.UsageTemplate(CompactUsageTemplate).
@@ -312,10 +364,13 @@ func main() {
 		r := gin.Default()
 		r.GET("/start", StartTest)
 
-		err := r.Run()
+		err := r.Run(":" + core.TestZillaAgentPortNumber)
 		if err != nil {
 			println("Error while start agent service.")
 			os.Exit(1)
+		} else {
+			println("TestZilla agent started and listen on port ", core.TestZillaServerPortNumber)
+
 		}
 	} else {
 		fmt.Println("Usage: ", osArguments[0], " server|agent_standalone|agent_distributed")
