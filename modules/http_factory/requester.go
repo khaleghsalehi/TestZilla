@@ -109,6 +109,7 @@ type Requester struct {
 }
 
 type ClientOpt struct {
+	TestID    string
 	Url       string
 	Method    string
 	Headers   []string

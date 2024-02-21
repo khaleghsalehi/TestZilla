@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testzilla/core"
+	"testzilla/core/global"
 	http2 "testzilla/modules/http_factory"
 	"time"
 
@@ -53,6 +54,7 @@ var (
 	summary         = kingpin.Flag("summary", "Only print the summary without realtime reports").Default("false").Bool()
 	pprofAddr       = kingpin.Flag("pprof", "Enable pprof at special address").Hidden().String()
 	url             = kingpin.Arg("url", "Request url").Required().String()
+	uuid            = kingpin.Arg("uuid", "Test uuid").Required().String()
 )
 
 // dynamically set by GoReleaser
@@ -181,6 +183,7 @@ func rateFlag(c *kingpin.Clause) (target *rateFlagValue) {
 func StartTest(ctx *gin.Context) {
 	// here we define rest API for req handeling
 	*url = ctx.Query("url")
+	*uuid = ctx.Query("uuid")
 
 	*insecure = true
 	*jsonFormat = true
@@ -239,6 +242,7 @@ func StartTest(ctx *gin.Context) {
 	}
 
 	clientOpt := http2.ClientOpt{
+		TestID:    *uuid,
 		Url:       *url,
 		Method:    *method,
 		Headers:   *headers,
@@ -338,6 +342,7 @@ func main() {
 
 	_, _ = fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
 	if osArguments[1] == "server" {
+		global.DBConnection = core.InitDB()
 		r := gin.Default()
 		r.Static("/css", "./assets/css")
 		r.Static("/img", "./assets/img")
@@ -347,11 +352,12 @@ func main() {
 		r.LoadHTMLGlob("templates/*")
 
 		//API controller
-		r.GET("/", core.Index)                              /* process test request (post form) */
-		r.GET("/new", core.NewTestForm)                     /* process test request (post form) */
-		r.GET("/report", core.ShowTestForm)                 /* process test request (post form) */
-		r.POST("/deployNodes", core.DeployAgentOnNodes)     /* process test request (post form) */
-		r.POST("/getNodesTestReport", core.GetAgentReports) /* get report from agents (nodes) */
+		r.GET("/", core.Index)                                /* process test request (post form) */
+		r.GET("/new", core.NewTestForm)                       /* process test request (post form) */
+		r.GET("/report", core.ShowTestForm)                   /* process test request (post form) */
+		r.POST("/deployNodes", core.DeployAgentOnNodes)       /* process test request (post form) */
+		r.POST("/getNodesTestReport", core.GetAgentReports)   /* get report from agents (nodes) */
+		r.GET("/downloadTestReport", core.DownloadTestReport) /* download test report */
 
 		addr := []string{":" + core.TestZillaServerPortNumber}
 		err := r.Run(addr...)

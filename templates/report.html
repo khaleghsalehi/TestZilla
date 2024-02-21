@@ -31,25 +31,24 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr>
-                                    <td>12 Jun 2023, 12:48:56</td>
-                                    <td>Payment AP Stress Test</td>
-                                    <td>Finished</td>
-                                    <td><a href="$">Download PDF</a></td>
-                                </tr>
-                                <tr>
-                                    <td>12 Jun 2023, 12:48:56</td>
-                                    <td>Payment AP Stress Test</td>
-                                    <td>Running...</td>
-                                    <td></td>
-                                </tr>
+
 
                                 {{ range .allTest }}
                                 <tr>
-                                    <td>{{ .DateTime }}</td>
+                                    <td>{{ .TimeStamp }}</td>
                                     <td>{{ .TestName }}</td>
-                                    <td>{{ .TestStatus }}</td>
-                                    <td>{{ .TestReportLink }}</td>
+                                    {{if .TestRunning }}
+                                    <td>Running</td>
+                                    {{else if .TestFinished }}
+                                    <td>Finished</td>
+                                    {{else if .TestFinished }}
+                                    <td>Finished</td>
+                                    {{else if .TestPassed }}
+                                    <td>Passed</td>
+                                    {{ else }}
+                                    <td>Unknown</td>
+                                    {{ end }}
+                                    <td><a href="/downloadTestReport?uuid={{.ID}}">Download Test Full Report</a></td>
                                 </tr>
                                 {{ end }}
                                 </tbody>
