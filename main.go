@@ -343,6 +343,7 @@ func main() {
 	_, _ = fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
 	if osArguments[1] == "server" {
 		global.DBConnection = core.InitDB()
+		//todo update all test status if running  was interrupted
 		r := gin.Default()
 		r.Static("/css", "./assets/css")
 		r.Static("/img", "./assets/img")

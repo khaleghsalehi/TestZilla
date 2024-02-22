@@ -15,9 +15,16 @@ TestZilla is a distributed solution for stress test and benchmarks on Applicatio
 The TestZilla architecture is monolithic.
 ![TestZilla Internal](TestZilla.png)
 
+# Dependency 
+ - PostgresSQL
+ - Golang 1.22.0 (and up)
 
 # Compile & Usage
 Follow the steps below to compile and run TestZilla:
+
+ -  PostgresSQL database "tz"
+ -  PostgresSQL username  "testzilla" with super admin privilege
+ -  PostgresSQL password  "123456"
 
 ``
 make clean

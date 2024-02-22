@@ -66,6 +66,7 @@ failPoint:
 		"&testDuration=" + td
 
 	println("requested agent url  -> ", requestUrl)
+
 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
 	if err != nil {
 		fmt.Printf("client: could not create request: %s, try again", err)
@@ -98,9 +99,14 @@ failPoint:
 	reportObj.AgentIP = ip
 	reportObj.TestResult = string(resBody)
 	global.DBConnection.Create(&reportObj)
+	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_started", false)
+	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_running", false)
+	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_finished", true)
 
 }
 func RunTestScenario(test entity.TestCase) {
+	var testObj entity.TestCase
+	global.DBConnection.Model(&testObj).Where("id =?", test.ID).Update("test_running", true)
 	totalIPList := strings.Split(test.NodeIPList, ",")
 	for _, ip := range totalIPList {
 		sshPort := strconv.Itoa(test.SSHPort)
@@ -122,7 +128,7 @@ func DownloadTestReport(ctx *gin.Context) {
 	ts := time.Now().Format("01-02-2006 15:04:05")
 	maxRequest := strconv.Itoa(int(testInfo.TestMaxRequest))
 	maxThreadPerNode := strconv.Itoa(int(testInfo.TestMaxThreadPerNode))
-
+	i := 0
 	f, err := os.Create(filename)
 	if err != nil {
 		pass = false
@@ -137,13 +143,19 @@ func DownloadTestReport(ctx *gin.Context) {
 	_, _ = f.WriteString("Test Max Request  [" + maxThreadPerNode + "]\n")
 	_, _ = f.WriteString("Target (System Under Test)  [" + testInfo.TargetIP + ":" + testInfo.TargetPort + "]\n")
 	_, _ = f.WriteString("Test Agent List [" + testInfo.NodeIPList + "]\n")
-	_, _ = f.WriteString("======================[ Test Details ]==================================\n")
-	for _, report := range fullReport {
-		_, _ = f.WriteString("[+]Test Reported by agent [" + report.AgentIP + "]\n")
-		_, _ = f.WriteString("\t" + report.TestResult + "\n")
+	_, _ = f.WriteString("======================[ Agent Activity Log  ]==================================\n")
+	i = len(fullReport)
+	for index, report := range fullReport {
+		rowNumber := strconv.Itoa(index)
+		_, _ = f.WriteString("[" + rowNumber + "] Agent IP [" + report.AgentIP + "]\n")
+		_, _ = f.WriteString(report.TestResult)
+		if index < i {
+			println("\n")
+		}
+
 	}
-	_, _ = f.WriteString("========================================================================\n")
-	_, _ = f.WriteString("Report End.\n")
+	_, _ = f.WriteString("=============================================================================\n")
+	_, _ = f.WriteString("Report End.\n\n\n")
 
 	// Check if the file exists
 	_, err = os.Stat(filename)
@@ -249,9 +261,9 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 		td, _ := strconv.Atoi(testDuration)
 		newTest.TestDuration = td
 
+		newTest.TestStarted = true
 		newTest.TestPassed = false
 		newTest.TestRunning = false
-		newTest.TestStarted = false
 		newTest.TestFinished = false
 
 		newTest.TargetIP = testTargetIP
