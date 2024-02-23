@@ -41,15 +41,6 @@ func isAvailable(ip string) bool {
 	}
 }
 func newTask(ip string, test entity.TestCase) {
-	fmt.Println("Start to deploy agent on ->", ip)
-	net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
-	net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
-	net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
-	net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "rm  /home/tomcat/Zilla/agent")
-	net_service.DeployAgent(test.SSHUserName, test.SSHPassword, ip, "./agent", "/home/tomcat/Zilla/agent")
-	net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "chmod +x /home/tomcat/Zilla/agent")
-	go net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "/home/tomcat/Zilla/agent agent_distributed")
-	//todo check if agent is running . e.g. ping  8080
 	/*
 		here we ask agent to run command below according to above test case
 		Example
@@ -93,7 +84,7 @@ failPoint:
 	fmt.Printf("client: response body for policy -> %s \n %s\n", test.ID, resBody)
 	//todo here we are going to store resBody
 	var reportObj entity.TestReport
-	reportObj.ReportID = uuid.New()
+	reportObj.ReportID = uuid.New().String()
 	reportObj.RelatedTestPolicyID = test.ID
 	reportObj.TimeStamp = time.Now().Format("01-02-2006 15:04:05")
 	reportObj.AgentIP = ip
@@ -104,15 +95,70 @@ failPoint:
 	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_finished", true)
 
 }
-func RunTestScenario(test entity.TestCase) {
+func checkAgentHealth(url string) bool {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		fmt.Printf("client: could not create request: %s, try again", err)
+		return false
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false
+	}
+
+	if res.StatusCode == 200 {
+		resBody, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return false
+		}
+		if string(resBody) == "\"ok\"" {
+			return true
+		}
+	}
+	return false
+}
+func RunTestScenario(test entity.TestCase) bool {
 	var testObj entity.TestCase
 	global.DBConnection.Model(&testObj).Where("id =?", test.ID).Update("test_running", true)
 	totalIPList := strings.Split(test.NodeIPList, ",")
+
+	// step 1: deploy and run agent
+	for _, ip := range totalIPList {
+		fmt.Println("Start to deploy agent on ->", ip)
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "rm  /home/tomcat/Zilla/agent")
+		net_service.DeployAgent(test.SSHUserName, test.SSHPassword, ip, "./agent", "/home/tomcat/Zilla/agent")
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "chmod +x /home/tomcat/Zilla/agent")
+		go net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "/home/tomcat/Zilla/agent agent_distributed")
+	}
+
+	// step 2:  heck if agents are up
+	errorCount := 0
+startPoint:
+	for _, ip := range totalIPList {
+		url := "http://" + ip + ":8080/health"
+		if checkAgentHealth(url) == false {
+			println("agent with ip -> ", ip, " is down,all nodes MUST be uo to start test,  try again...")
+			time.Sleep(3 * time.Second)
+			errorCount++
+			if errorCount >= 6 {
+				return false
+			}
+			goto startPoint
+		} else {
+			println("agent with ip -> ", ip, " is up.")
+		}
+	}
+	// step 3: run task on agents
 	for _, ip := range totalIPList {
 		sshPort := strconv.Itoa(test.SSHPort)
 		sshServer := ip + ":" + sshPort
 		go newTask(sshServer, test)
 	}
+	return true
 }
 func DownloadTestReport(ctx *gin.Context) {
 	pass := false
@@ -286,7 +332,10 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 			}
 		}
 		global.DBConnection.Create(&newTest)
-		RunTestScenario(newTest)
+		if RunTestScenario(newTest) == false {
+			println("error while staring test, all agents seems not up, please check it")
+			ctx.Redirect(302, "/new?msg=error while staring test, all agents seems not up, please check it")
+		}
 	} else {
 		ctx.Redirect(302, "/new?msg=error, ip list is null or empty")
 	}

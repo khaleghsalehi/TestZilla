@@ -179,7 +179,9 @@ func rateFlag(c *kingpin.Clause) (target *rateFlagValue) {
 	c.SetValue(target)
 	return
 }
-
+func HealthReport(ctx *gin.Context) {
+	ctx.JSON(200, "ok")
+}
 func StartTest(ctx *gin.Context) {
 	// here we define rest API for req handeling
 	*url = ctx.Query("url")
@@ -379,6 +381,7 @@ func main() {
 		fmt.Println("Run in distributed  mode, waiting command...")
 		r := gin.Default()
 		r.GET("/start", StartTest)
+		r.GET("/health", HealthReport)
 
 		err := r.Run(":" + core.TestZillaAgentPortNumber)
 		if err != nil {
