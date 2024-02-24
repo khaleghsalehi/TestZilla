@@ -59,6 +59,7 @@ You can run TestZilla in one of the following modes:
  # Web Dashboard
 
 ![web dashboard](screen.png)
+![web dashboard](screen-2.png)
 
 
 
