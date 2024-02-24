@@ -52,9 +52,9 @@ failPoint:
 	maxReq := strconv.Itoa(int(test.TestMaxRequest))
 	td := strconv.Itoa(test.TestDuration)
 	extractUrl := strings.Split(ip, ":")
-	requestUrl := "http://" + extractUrl[0] + ":8080/start?uuid=" + test.ID + "&url=http://" + test.TargetIP + ":" +
+	requestUrl := "http://" + extractUrl[0] + ":8080/start?uuid=" + test.ID + "&url=" + test.TestProtocolName + "://" + test.TargetIP + ":" +
 		test.TargetPort + "&maxThread=" + maxThread + "&maxRequest=" + maxReq +
-		"&testDuration=" + td
+		"&testDuration=" + td + "&method=" + test.TestProtocolOptions + "&testPostFileSize=" + test.TestHttpProtocolPostOptionsFileSize
 
 	println("requested agent url  -> ", requestUrl)
 
@@ -83,7 +83,7 @@ failPoint:
 	}
 	fmt.Printf("client: response body for policy -> %s \n %s\n", test.ID, resBody)
 	//todo here we are going to store resBody
-	var reportObj entity.TestReport
+	var reportObj entity.TestingReport
 	reportObj.ReportID = uuid.New().String()
 	reportObj.RelatedTestPolicyID = test.ID
 	reportObj.TimeStamp = time.Now().Format("01-02-2006 15:04:05")
@@ -141,7 +141,7 @@ startPoint:
 	for _, ip := range totalIPList {
 		url := "http://" + ip + ":8080/health"
 		if checkAgentHealth(url) == false {
-			println("agent with ip -> ", ip, " is down,all nodes MUST be uo to start test,  try again...")
+			println("agent with ip -> ", ip, " is down,all nodes MUST be up to start test,  try again...")
 			time.Sleep(3 * time.Second)
 			errorCount++
 			if errorCount >= 6 {
@@ -167,7 +167,7 @@ func DownloadTestReport(ctx *gin.Context) {
 	var testInfo entity.TestCase
 	global.DBConnection.Where("id =?", testID).Find(&testInfo)
 
-	var fullReport []entity.TestReport
+	var fullReport []entity.TestingReport
 	global.DBConnection.Where("related_test_policy_id =?", testID).Find(&fullReport)
 
 	filename := "/tmp/" + uuid.New().String() + ".txt"
@@ -185,6 +185,7 @@ func DownloadTestReport(ctx *gin.Context) {
 	_, _ = f.WriteString(ts + "\n")
 	_, _ = f.WriteString("Test Details:\n")
 	_, _ = f.WriteString("Test Name  [" + testInfo.TestName + "]\n")
+	_, _ = f.WriteString("Candidate Protocol & Options  [" + testInfo.TestProtocolName + "," + testInfo.TestProtocolOptions + "]\n")
 	_, _ = f.WriteString("Test Max Request  [" + maxRequest + "]\n")
 	_, _ = f.WriteString("Test Max Request  [" + maxThreadPerNode + "]\n")
 	_, _ = f.WriteString("Target (System Under Test)  [" + testInfo.TargetIP + ":" + testInfo.TargetPort + "]\n")
@@ -272,8 +273,40 @@ func ShowTestForm(ctx *gin.Context) {
 }
 func DeployAgentOnNodes(ctx *gin.Context) {
 	//todo authentication and authorization
+	//todo input and type validation
 
 	var testName = ctx.PostForm("testName")
+
+	// catch protocol name and options
+	var testProtocolName = strings.ToLower(ctx.PostForm("protocolName"))
+	var testProtocolOptions = strings.ToLower(ctx.PostForm("protocolOptions"))
+	var testPostFileSize = ctx.PostForm("testPostFileSize")
+	// validate protocol name
+	pass := false
+	for _, protocol := range ProtocolsList {
+		if protocol == testProtocolName {
+			pass = true
+			break
+		}
+	}
+	if pass == false {
+		println(testProtocolName + " protocol option not support by now.")
+		ctx.Redirect(302, "/new?msg="+testProtocolName+" protocol opt not support by now.")
+	}
+
+	// validate option
+	pass = false
+	for _, option := range ProtocolOption {
+		if option == testProtocolOptions {
+			pass = true
+			break
+		}
+	}
+	if pass == false {
+		println(testProtocolOptions + " option not support by now.")
+		ctx.Redirect(302, "/new?msg="+testProtocolOptions+" option not support by now.")
+	}
+
 	var testMaxThreadPerNode = ctx.PostForm("testMaxThreadPerNode")
 	var testDuration = ctx.PostForm("testDuration")
 
@@ -298,6 +331,11 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 		newTest.ID = uuid.New().String()
 		newTest.TimeStamp = time.Now().Format("01-02-2006 15:04:05")
 		newTest.TestName = testName
+
+		newTest.TestProtocolName = testProtocolName
+		newTest.TestProtocolOptions = testProtocolOptions
+		newTest.TestHttpProtocolPostOptionsFileSize = testPostFileSize
+
 		tmr, _ := strconv.Atoi(testMaxRequest)
 		newTest.TestMaxRequest = int64(tmr)
 		tmt, _ := strconv.Atoi(testMaxThreadPerNode)

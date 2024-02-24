@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type TestReport struct {
+type TestingReport struct {
 	gorm.Model
 	ReportID            string
 	RelatedTestPolicyID string

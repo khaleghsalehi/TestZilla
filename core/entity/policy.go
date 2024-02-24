@@ -6,9 +6,13 @@ import (
 
 type TestCase struct {
 	gorm.Model
-	ID                   string
-	TimeStamp            string
-	TestName             string
+	ID                                  string
+	TimeStamp                           string
+	TestName                            string
+	TestProtocolName                    string
+	TestProtocolOptions                 string
+	TestHttpProtocolPostOptionsFileSize string
+
 	TestMaxThreadPerNode int64
 	TestMaxRequest       int64
 	TestDuration         int

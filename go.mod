@@ -7,7 +7,7 @@ require (
 	github.com/beorn7/perks v1.0.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-ping/ping v1.1.0
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.6.0
 	github.com/mattn/go-isatty v0.0.19
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/scottkiss/gosshtool v0.0.0-20230329101511-85d395a14a8f

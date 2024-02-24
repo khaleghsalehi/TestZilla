@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	_ "net/http/pprof"
@@ -54,7 +55,7 @@ var (
 	summary         = kingpin.Flag("summary", "Only print the summary without realtime reports").Default("false").Bool()
 	pprofAddr       = kingpin.Flag("pprof", "Enable pprof at special address").Hidden().String()
 	url             = kingpin.Arg("url", "Request url").Required().String()
-	uuid            = kingpin.Arg("uuid", "Test uuid").Required().String()
+	uid             = kingpin.Arg("uuid", "Test uuid").Required().String()
 )
 
 // dynamically set by GoReleaser
@@ -185,7 +186,7 @@ func HealthReport(ctx *gin.Context) {
 func StartTest(ctx *gin.Context) {
 	// here we define rest API for req handeling
 	*url = ctx.Query("url")
-	*uuid = ctx.Query("uuid")
+	*uid = ctx.Query("uuid")
 
 	*insecure = true
 	*jsonFormat = true
@@ -199,7 +200,39 @@ func StartTest(ctx *gin.Context) {
 	testDuration, _ := strconv.Atoi(ctx.Query("testDuration"))
 	*duration = time.Duration(testDuration) * time.Second
 
-	*method = "GET"
+	testMethod := strings.ToLower(ctx.Query("method"))
+	randomFileName := ""
+	if testMethod == "get" {
+		*method = "GET"
+	} else if testMethod == "post" {
+		//todo test option -> file size
+		*method = "POST"
+		fileSize := ctx.Query("testPostFileSize")
+
+		if len(fileSize) > 0 {
+			randomFileName = "TESTZILLA-" + uuid.New().String() + ".txt"
+
+			// create random file with size
+			d1 := []byte("A")
+			size, _ := strconv.Atoi(fileSize)
+			if size > global.MaxFileSizeAgentPostMethod {
+				size = global.MaxFileSizeAgentPostMethod
+			}
+			for i := 0; i < size; i++ {
+				d1 = append(d1, 'A')
+			}
+
+			err := os.WriteFile("/tmp/"+randomFileName, d1, 0644)
+			if err != nil {
+				*body = ""
+			} else {
+				*body = "@/tmp/" + randomFileName
+			}
+		} else {
+			*body = "" // nothing
+		}
+	}
+
 	*reqRate = rateFlagValue{infinity: true}
 	if *requests >= 0 && *requests < int64(*concurrency) {
 		errAndExit("requests must greater than or equal concurrency")
@@ -244,7 +277,7 @@ func StartTest(ctx *gin.Context) {
 	}
 
 	clientOpt := http2.ClientOpt{
-		TestID:    *uuid,
+		TestID:    *uid,
 		Url:       *url,
 		Method:    *method,
 		Headers:   *headers,
@@ -294,6 +327,9 @@ func StartTest(ctx *gin.Context) {
 	report := core.NewStreamReport()
 	go report.Collect(requester.RecordChan())
 
+	// remove  temp POST file
+	_ = os.Remove(randomFileName)
+
 	// terminal printer
 	printer := core.NewPrinter(*requests, *duration, !*clean, *summary)
 	printer.PrintLoop(report.Snapshot, *interval, *seconds, *jsonFormat, report.Done())
@@ -338,13 +374,18 @@ startPoint:
 
 func main() {
 	osArguments := os.Args
+
 	/* for in-house test */
 	//var osArguments [10]string
 	//osArguments[1] = "server"
 
 	_, _ = fmt.Fprintln(os.Stderr, "\U0001F996 TestZilla, Version "+core.TestzillaVersion)
 	if osArguments[1] == "server" {
+
+		//initialize server env and global variables
 		global.DBConnection = core.InitDB()
+		core.InitServer()
+
 		//todo update all test status if running  was interrupted
 		r := gin.Default()
 		r.Static("/css", "./assets/css")

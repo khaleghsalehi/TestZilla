@@ -35,6 +35,37 @@
                                                placeholder="e.g Payment Service Stress Test" required>
                                     </div>
                                 </div>
+                                <hr>
+                                <!-- Protocol -->
+                                <div class="form-group row">
+                                    <label for="protocol" class="col-sm-3 col-form-label">Protocol Name</label>
+                                    <div class="col-sm-9">
+                                        <select name="protocolName" id="protocol" required>
+                                            <option value="HTTP">HTTP</option>
+                                            <option value="HTTPS">HTTPS</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!--                                Protocol parameters-->
+                                <div class="form-group row">
+                                    <label for="protocolOptions" class="col-sm-3 col-form-label">Protocol
+                                        Options</label>
+                                    <div class="col-sm-9">
+                                        <select name="protocolOptions" id="protocolOptions" required>
+                                            <option value="GET">GET</option>
+                                            <option value="POST">POST</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 col-form-label">Option POST File Size/Byte (Max  1000,000,000 )</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" name="testPostFileSize"
+                                               placeholder="e.g 128000">
+                                    </div>
+                                </div>
+                                <hr>
+
                                 <div class="form-group row">
                                     <label class="col-sm-3 col-form-label">Test Duration (Second)</label>
                                     <div class="col-sm-9">
@@ -69,7 +100,8 @@
                                 <div class="form-group row">
                                     <label class="col-sm-3 col-form-label">Target IP</label>
                                     <div class="col-sm-9">
-                                        <input type="text" class="form-control" name="targetIP" placeholder="e.g 192.168.1.1"
+                                        <input type="text" class="form-control" name="targetIP"
+                                               placeholder="e.g 192.168.1.1"
                                                required>
                                     </div>
                                 </div>
