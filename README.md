@@ -3,7 +3,7 @@ TestZilla is a test  & benchmark framework, written in Golang, initially forked 
 - [x] Generate 1000,000 RPS in your Home-Made Lab
 
 # Demo
-![TestZilla Demo](demo.gif)
+![TestZilla Demo](documents/video/demo.gif)
 
 # About 
 
@@ -23,11 +23,11 @@ Suppose we have a number of machine  in our laboratory, and we want to generate 
 
 6- The report related to the Test Operation of all agents will be available in report form.
 
-![Test Plan](scenario.png)
+![Test Plan](documents/img/scenario.png)
 
 # Component & Modules
 The TestZilla architecture is monolithic.
-![TestZilla Internal](TestZilla.png)
+![TestZilla Internal](documents/img/TestZilla.png)
 
 # Dependency 
  - PostgresSQL
@@ -40,26 +40,28 @@ Follow the steps below to compile and run TestZilla:
  -  PostgresSQL username  "testzilla" with super admin privilege
  -  PostgresSQL password  "123456"
 
+Run commands below step by step:
+
 ``
-make clean
+chmod +x run.sh
 ``
 
 then
 
 ``
-make build
+./run.sh
 ``
 
-You can run TestZilla in one of the following modes:
+ all done.
+ Now you can open your browser and enter Testzilla dashboard by entering the following address.
 
-1. Server: TestZilla as a master (Test Management Server)
-2. Agent:  TestZilla as a agent (Test Node)
-   3. Standalone: Run node in single mode
-   4. Distributed: Run node in distributed mode 
- # Web Dashboard
 
-![web dashboard](screen.png)
-![web dashboard](screen-2.png)
+[http://localhost:9090](http://localhost:9090)
+
+ 
+# Web Dashboard
+![web dashboard](documents/img/screen.png)
+![web dashboard](documents/img/screen-2.png)
 
 
 

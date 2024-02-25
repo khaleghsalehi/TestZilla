@@ -7,7 +7,7 @@ import (
 	"testzilla/core/global"
 )
 
-func DeployAgent(username string, password string, ip string, src string, dst string) {
+func DeployAgent(username string, password string, ip string, src string, dst string) (error, bool) {
 	config := &gosshtool.SSHClientConfig{
 		User:     username,
 		Password: password,
@@ -17,12 +17,13 @@ func DeployAgent(username string, password string, ip string, src string, dst st
 	sshClient.MaxDataThroughput = 6553600
 	stdout, stderr, err := gosshtool.UploadFile(ip, src, dst)
 	if err != nil {
-		log.Panicln(err)
+		return err, false
 	}
 	if stderr != "" {
-		log.Panicln(stderr)
+		return err, false
 	}
 	log.Println("agent deployed succeeded " + stdout)
+	return nil, true
 }
 
 func PingSSHServer(username string, password string, ip string, command string) bool {

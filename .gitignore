@@ -13,5 +13,10 @@ testzilla
 
 vendor/
 bench_server/bench_server
-plow*
+agent
+testzilla
+
+
+nohup.out
 dist/
+

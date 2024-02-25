@@ -41,13 +41,13 @@
                                     <td>Running <img src="img/progress.gif" alt="test running, please wait..."
                                                      width="50"/></td>
                                     {{else if .TestFinished }}
-                                    <td>Finished</td>
-                                    {{else if .TestFinished }}
-                                    <td>Finished</td>
+                                    <td style="color: #3f51b5">Finished</td>
                                     {{else if .TestPassed }}
-                                    <td>Passed</td>
+                                    <td style="color: #13855c">Passed</td>
+                                    {{else if .TestFailed }}
+                                    <td style="color: #be2617"> Failed</td>
                                     {{ else }}
-                                    <td>Unknown</td>
+                                    <td style="color: #6e707e">Unknown</td>
                                     {{ end }}
                                     {{ if .TestFinished }}
                                     <td>

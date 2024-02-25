@@ -90,9 +90,7 @@ failPoint:
 	reportObj.AgentIP = ip
 	reportObj.TestResult = string(resBody)
 	global.DBConnection.Create(&reportObj)
-	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_started", false)
-	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_running", false)
-	global.DBConnection.Model(&test).Where("id =?", test.ID).Update("test_finished", true)
+	entity.UpdateTestStatus(test, false, false, false, false, true)
 
 }
 func checkAgentHealth(url string) bool {
@@ -119,8 +117,7 @@ func checkAgentHealth(url string) bool {
 	return false
 }
 func RunTestScenario(test entity.TestCase) bool {
-	var testObj entity.TestCase
-	global.DBConnection.Model(&testObj).Where("id =?", test.ID).Update("test_running", true)
+	entity.UpdateTestStatus(test, false, true, false, false, false)
 	totalIPList := strings.Split(test.NodeIPList, ",")
 
 	// step 1: deploy and run agent
@@ -129,10 +126,16 @@ func RunTestScenario(test entity.TestCase) bool {
 		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
 		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
 		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "killall agent")
-		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "rm  /home/tomcat/Zilla/agent")
-		net_service.DeployAgent(test.SSHUserName, test.SSHPassword, ip, "./agent", "/home/tomcat/Zilla/agent")
-		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "chmod +x /home/tomcat/Zilla/agent")
-		go net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "/home/tomcat/Zilla/agent agent_distributed")
+		filePath := "/home/" + test.SSHUserName + "/Zilla"
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "mkdir "+filePath)
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "rm  "+filePath+"/agent")
+		err, status := net_service.DeployAgent(test.SSHUserName, test.SSHPassword, ip, "./agent", filePath+"/agent")
+		if status == false {
+			println("error -> ", err)
+			return false
+		}
+		net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, "chmod +x "+filePath+"/agent")
+		go net_service.RunCommandOnAgent(test.SSHUserName, test.SSHPassword, ip, filePath+"/agent agent_distributed")
 	}
 
 	// step 2:  heck if agents are up
@@ -349,6 +352,7 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 		newTest.TestPassed = false
 		newTest.TestRunning = false
 		newTest.TestFinished = false
+		newTest.TestFailed = false
 
 		newTest.TargetIP = testTargetIP
 		newTest.TargetPort = testTargetPort
@@ -371,6 +375,7 @@ func DeployAgentOnNodes(ctx *gin.Context) {
 		}
 		global.DBConnection.Create(&newTest)
 		if RunTestScenario(newTest) == false {
+			entity.UpdateTestStatus(newTest, false, false, true, false, false)
 			println("error while staring test, all agents seems not up, please check it")
 			ctx.Redirect(302, "/new?msg=error while staring test, all agents seems not up, please check it")
 		}
