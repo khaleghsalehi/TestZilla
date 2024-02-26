@@ -2,7 +2,9 @@
 TestZilla is a test  & benchmark framework, written in Golang, initially forked from [Plow](https://github.com/six-ddc/plow). TestZilla is under development. 
 - [x] Generate 1000,000 RPS in your Home-Made Lab
 
-# Demo
+
+❤️  TestZilla is free and will be free forever to use because of donations from people like you.[Click here for support](mailto:khaleghsalehi@gmail.com)
+
 ![TestZilla Demo](documents/video/demo.gif)
 
 # About 

@@ -199,6 +199,7 @@ func buildRequestClient(opt *ClientOpt, r *int64, w *int64) (*fasthttp.HostClien
 			opt.Socks5Proxy = "socks5://" + opt.Socks5Proxy
 		}
 		httpClient.Dial = fasthttpproxy.FasthttpSocksDialer(opt.Socks5Proxy)
+
 	} else {
 		httpClient.Dial = fasthttpproxy.FasthttpProxyHTTPDialerTimeout(opt.DialTimeout)
 	}
