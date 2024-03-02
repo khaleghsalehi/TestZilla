@@ -2,14 +2,27 @@
 TestZilla is a test  & benchmark framework, written in Golang, initially forked from [Plow](https://github.com/six-ddc/plow). TestZilla is under development. 
 - [x] Generate 1000,000 RPS in your Home-Made Lab
 
-
-❤️  TestZilla is free and will be free forever to use because of donations from people like you.[Click here for support](mailto:khaleghsalehi@gmail.com)
-
-![TestZilla Demo](documents/video/demo.gif)
-
-# About 
+# About
 
 TestZilla is a distributed solution for stress test and benchmarks on Application Services, APIs, Web Servers and Network Protocols. TestZilla is currently under development, and its initial version is focused on Web Application Services and REST API. In TestZilla's development, we are trying to provide you with a home-based and cost-effective solution for setting up a benchmark lab. The goal is to create-N * 1000,000 RPS at your homemade lab. Currently, there are many open source solutions for stress testing and benchmarking in the open source community, thanks to all of them. We are trying to provide all the functional features of these tools in the form of a unique solution.
+
+
+# ❤️
+ TestZilla is free and will be free forever to use because of donations from people like you.[Click here for support](mailto:khaleghsalehi@gmail.com)
+
+Your donate: 
+
+<img src="documents/img/qr-bc1qqnzaav58qy9c03jw0ahylemlksfe6ll8aeegux.png" width="200" height="200">
+
+```
+bc1qqnzaav58qy9c03jw0ahylemlksfe6ll8aeegux
+```
+
+
+# Demo
+![TestZilla Demo](documents/video/demo.gif)
+
+
 # Test scenario
 Suppose we have a number of machine  in our laboratory, and we want to generate 1000000 http RPS. If each machine can generate 50K requests, we need 1+20 machines. One machine to deploy TestZilla in server mode and 20 other machines to distribute Agents, follow the steps below step by step to perform this test scenario.
 
